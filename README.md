@@ -3,7 +3,8 @@
 
 ### Overview
 Version 1.0 serves as the initial prototype for log keyword matching. It reads raw log entries line-by-line and checks each record against a dictionary of defined security alert triggers.
-
+### Note on Telemetry Data:
+```The underlying sample_security.log file represents an expanding test dataset. Additional log entries (including network connections, external URLs, and file hashes) will be introduced in subsequent versions to support regex extraction, detection structure, and SOC automation workflows.```
 ### Key Logic
 - Direct file ingestion from `sample_security.log`.
 - Case-insensitive keyword lookup (`keyword.lower() in log.lower()`).

@@ -26,3 +26,55 @@ Total log lines: 17
 [ALERT] [POWERSHELL] 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-Service
 [ALERT] [ENCODED_POWERSHELL] 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
 ```
+## Version 2.0 — Structured Log Parsing with Regex (blue_log_analyzerv2.py)
+## Overview
+Version 2.0 introduces the re (Regular Expressions) module to transition from basic string matching to structured field extraction. It targets specific log signatures to parse raw log strings into discrete metadata components (timestamp, log level, and target username).
+
+### Note on Telemetry Data: 
+```The underlying sample_security.log dataset continues to expand with varied threat categories. Future iterations will build upon this regex framework to extract IP addresses, domain URLs, and cryptographic file hashes.```
+
+## Key Features
+Regex Extraction Engine: Uses re.search() with capture groups () to isolate structured fields from unstructured log strings.
+
+Field Deserialization: Separates raw log data into timestamp, severity, and username variables.
+
+Targeted Pattern Matching: Filters specifically for failed login events (Failed login attempt: user=\w+).
+
+### Source Code
+## Python
+```text
+import re
+
+with open("sample_security.log", "r") as file:
+    logs = file.readlines()
+
+print("=== Extracted Login Information ===")
+
+for log in logs:
+
+    match = re.search(
+        r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) (\w+) Failed login attempt: user=(\w+)",
+        log
+    )
+
+    if match:
+        timestamp = match.group(1)
+        severity = match.group(2)
+        username = match.group(3)
+
+        print("Timestamp:", timestamp)
+        print("Severity:", severity)
+        print("User:", username)
+        print()
+```
+## Expected Output
+```Plaintext
+=== Extracted Login Information ===
+Timestamp: 2026-08-27 10:16:03
+Severity: WARNING
+User: admin
+
+Timestamp: 2026-08-27 10:19:33
+Severity: WARNING
+User: root
+```

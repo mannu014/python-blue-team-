@@ -26,7 +26,7 @@ Total log lines: 17
 [ALERT] [POWERSHELL] 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-Service
 [ALERT] [ENCODED_POWERSHELL] 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
 ```
-## Version 2.0 — Structured Log Parsing with Regex (blue_log_analyzerv2.py)
+## Version 2.0 — Structured Log Parsing with Regex (blue_log_analyzer_v2.py)
 ## Overview
 Version 2.0 introduces the re (Regular Expressions) module to transition from basic string matching to structured field extraction. It targets specific log signatures to parse raw log strings into discrete metadata components (timestamp, log level, and target username).
 
@@ -78,3 +78,64 @@ Timestamp: 2026-08-27 10:19:33
 Severity: WARNING
 User: root
 ```
+## Version 3.0 — Modular Detection & Function-Based Parser (blue_log_analyzer_v3.py)
+### Overview
+Version 3.0 refactors the analyzer into a clean, function-driven architecture (analyze_log()). It combines conditional logic (if / elif / else) with regular expressions and string matching to route log entries through a multi-rule detection pipeline.
+
+### Note on Telemetry Data:
+As with earlier iterations, sample_security.log serves as an active test bed that will be expanded with additional log formats in future updates.
+
+### Key Features
+**Modular Function Structure:** Encapsulates parsing logic inside an analyze_log() function for improved code organization and readability.
+
+**Multi-Rule Detection Engine:**
+Evaluates log lines against multiple security rules in a structured priority order:
+
+1. Regex-based extraction for failed logins.
+
+2. String matching for obfuscated (Encoded PowerShell) execution.
+
+3. General PowerShell execution detection.
+
+**Noise Suppression:** Uses an else: return branch to filter out benign log events and prevent console clutter.
+
+### Expected Output
+```Plaintext
+=== SOC LOG ANALYZER v3 ===
+Total log lines: 17
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:16:03
+Severity: WARNING
+User: admin
+
+[POWERSHELL]
+Event: 2026-08-27 10:16:10 WARNING PowerShell execution detected
+
+[ENCODED_POWERSHELL]
+Event: 2026-08-27 10:18:12 ALERT Encoded PowerShell command detected
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:19:33
+Severity: WARNING
+User: root
+
+[POWERSHELL]
+Event: 2026-08-27 10:20:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:21:02 ALERT Suspicious PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:22:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:23:01 ALERT PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-Service
+
+[POWERSHELL]
+Event: 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+```
+

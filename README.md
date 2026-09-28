@@ -138,4 +138,61 @@ Event: 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-
 [POWERSHELL]
 Event: 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
 ```
+## Version 4.0 — Metrics Tracking & Detection Summary Engine (blue_log_analyzer_v4.py)
+### Overview
+Version 4.0 builds upon the function-driven architecture of v3 by introducing stateful metric aggregation (detection_counts). It increments dedicated counters for each rule match across the log processing loop and prints an executive summary report at the end of execution.
+
+**Note on Telemetry Data:** As with earlier iterations, sample_security.log serves as an active test bed that will be expanded with additional log formats in future updates.
+
+### Key Features
+**Global Metric State Tracking:** Utilizes a central dictionary (detection_counts) to record hit frequencies across all detection categories.
+
+**Dynamic Event Counting:** Automatically tallies FAILED_LOGIN, POWERSHELL, and ENCODED_POWERSHELL events as logs are processed through analyze_log().
+
+**SOC Executive Reporting:** Generates a post-analysis summary report giving instant visibility into detection distribution and alert volume.
+
+### Expected Output
+```Plaintext
+=== SOC LOG ANALYZER v4 ===
+Total log lines: 17
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:16:03
+Severity: WARNING
+User: admin
+
+[POWERSHELL]
+Event: 2026-08-27 10:16:10 WARNING PowerShell execution detected
+
+[ENCODED_POWERSHELL]
+Event: 2026-08-27 10:18:12 ALERT Encoded PowerShell command detected
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:19:33
+Severity: WARNING
+User: root
+
+[POWERSHELL]
+Event: 2026-08-27 10:20:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:21:02 ALERT Suspicious PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:22:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:23:01 ALERT PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-Service
+
+[POWERSHELL]
+Event: 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+=== Detection Summary ===
+Failed Logins: 2
+PowerShell Events: 7
+Encoded PowerShell: 1
+```
 

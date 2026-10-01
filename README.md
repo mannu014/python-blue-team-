@@ -195,4 +195,59 @@ Failed Logins: 2
 PowerShell Events: 7
 Encoded PowerShell: 1
 ```
+## Version 4.1 — Precision Rule Routing & Return Signal Fix (blue_log_analyzer_v4.1.py)
+### Overview
+Version 4.1 resolves a subtle rule-evaluation bug present in previous versions where general PowerShell string matching intercepted obfuscated PowerShell commands (-EncodedCommand) before they could reach dedicated rules. By introducing explicit return signals per match block, v4.1 ensures clean rule-exit execution and accurate detection tallies.
 
+**Note on Telemetry Data:** As with earlier iterations, sample_security.log serves as an active test bed that will be expanded with additional log formats in future updates.
+
+### Key Features
+**Explicit Rule Return Values:** Each detection branch returns its exact alert category string (return "FAILED_LOGIN", return "ENCODED_POWERSHELL"), preventing rule overlap and multi-rule triggering.
+
+**Accurate Metric Tallying:** Properly categorizes -EncodedCommand activity into the ENCODED_POWERSHELL metric counter rather than lumping it under general POWERSHELL.
+
+**Clean Execution Flow:** Guarantees single-hit evaluation per log line while retaining the global summary metric engine.
+## Expected Output
+```Plaintext
+=== SOC LOG ANALYZER v4.1 ===
+Total log lines: 17
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:16:03
+Severity: WARNING
+User: admin
+
+[POWERSHELL]
+Event: 2026-08-27 10:16:10 WARNING PowerShell execution detected
+
+[ENCODED_POWERSHELL]
+Event: 2026-08-27 10:18:12 ALERT Encoded PowerShell command detected
+
+[FAILED_LOGIN]
+Timestamp: 2026-08-27 10:19:33
+Severity: WARNING
+User: root
+
+[POWERSHELL]
+Event: 2026-08-27 10:20:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:21:02 ALERT Suspicious PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:22:15 WARNING PowerShell command: powershell.exe -ExecutionPolicy Bypass -Command Get-Date
+
+[POWERSHELL]
+Event: 2026-08-27 10:23:01 ALERT PowerShell command: powershell.exe -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+[POWERSHELL]
+Event: 2026-08-27 10:24:10 INFO PowerShell command: powershell.exe -Command Get-Service
+
+[POWERSHELL]
+Event: 2026-08-27 10:25:30 ALERT PowerShell command: powershell.exe -ExecutionPolicy Bypass -EncodedCommand RwBlAHQALQBEAGEAdABlAA==
+
+=== Detection Summary ===
+Failed Logins: 2
+PowerShell Events: 7
+Encoded PowerShell: 1
+```
